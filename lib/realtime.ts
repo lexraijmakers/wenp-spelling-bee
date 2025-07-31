@@ -1,113 +1,122 @@
-'use client';
+'use client'
 
-import { pusherClient, getChannelName, SpellingBeeEvents } from './pusher';
+import { getChannelName, pusherClient, SpellingBeeEvents } from './pusher'
 
 // Helper function to send events via API
 const sendEvent = async (endpoint: string, data: Record<string, unknown>) => {
-  try {
-    const response = await fetch(`/api/pusher/${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+        const response = await fetch(`/api/pusher/${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
 
-    if (!response.ok) {
-      throw new Error(`Failed to send event: ${response.statusText}`);
+        if (!response.ok) {
+            throw new Error(`Failed to send event: ${response.statusText}`)
+        }
+
+        return await response.json()
+    } catch (error) {
+        console.error(`Error sending ${endpoint} event:`, error)
+        throw error
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`Error sending ${endpoint} event:`, error);
-    throw error;
-  }
-};
+}
 
 // Real-time communication class
 export class SpellingBeeRealtime {
-  private channel: ReturnType<typeof pusherClient.subscribe> | null = null;
-  private roomCode: string;
+    private channel: ReturnType<typeof pusherClient.subscribe> | null = null
+    private roomCode: string
 
-  constructor(roomCode: string) {
-    this.roomCode = roomCode;
-  }
-
-  // Subscribe to room events
-  subscribe() {
-    const channelName = getChannelName(this.roomCode);
-    this.channel = pusherClient.subscribe(channelName);
-    return this.channel;
-  }
-
-  // Unsubscribe from room events
-  unsubscribe() {
-    if (this.channel) {
-      pusherClient.unsubscribe(this.channel.name);
-      this.channel = null;
+    constructor(roomCode: string) {
+        this.roomCode = roomCode
     }
-  }
 
-  // Listen to specific events
-  on<T extends keyof SpellingBeeEvents>(
-    event: T,
-    callback: (data: SpellingBeeEvents[T]) => void
-  ) {
-    if (this.channel) {
-      this.channel.bind(event, callback);
+    // Subscribe to room events
+    subscribe() {
+        const channelName = getChannelName(this.roomCode)
+        this.channel = pusherClient.subscribe(channelName)
+        return this.channel
     }
-  }
 
-  // Remove event listeners
-  off<T extends keyof SpellingBeeEvents>(
-    event: T,
-    callback?: (data: SpellingBeeEvents[T]) => void
-  ) {
-    if (this.channel) {
-      this.channel.unbind(event, callback);
+    // Unsubscribe from room events
+    unsubscribe() {
+        if (this.channel) {
+            pusherClient.unsubscribe(this.channel.name)
+            this.channel = null
+        }
     }
-  }
 
-  // Send events (these will trigger API calls)
-  async selectWord(word: string, availableInfo: string[]) {
-    return sendEvent('word-selected', {
-      roomCode: this.roomCode,
-      word,
-      availableInfo,
-    });
-  }
+    // Listen to specific events
+    on<T extends keyof SpellingBeeEvents>(
+        event: T,
+        callback: (data: SpellingBeeEvents[T]) => void
+    ) {
+        if (this.channel) {
+            this.channel.bind(event, callback)
+        }
+    }
 
-  async startTimer(duration: number) {
-    return sendEvent('timer-start', {
-      roomCode: this.roomCode,
-      duration,
-    });
-  }
+    // Remove event listeners
+    off<T extends keyof SpellingBeeEvents>(
+        event: T,
+        callback?: (data: SpellingBeeEvents[T]) => void
+    ) {
+        if (this.channel) {
+            this.channel.unbind(event, callback)
+        }
+    }
 
-  async resetTimer() {
-    return sendEvent('timer-reset', {
-      roomCode: this.roomCode,
-    });
-  }
+    // Send events (these will trigger API calls)
+    async selectWord(word: string, availableInfo: string[]) {
+        return sendEvent('word-selected', {
+            roomCode: this.roomCode,
+            word,
+            availableInfo
+        })
+    }
 
-  async provideInfo(type: string, content: string) {
-    return sendEvent('info-provided', {
-      roomCode: this.roomCode,
-      type,
-      content,
-    });
-  }
+    async startTimer(duration: number) {
+        return sendEvent('timer-start', {
+            roomCode: this.roomCode,
+            duration
+        })
+    }
 
-  async judgeDecision(correct: boolean, correctSpelling?: string) {
-    return sendEvent('judge-decision', {
-      roomCode: this.roomCode,
-      correct,
-      correctSpelling,
-    });
-  }
+    async resetTimer() {
+        return sendEvent('timer-reset', {
+            roomCode: this.roomCode
+        })
+    }
+
+    async provideInfo(type: string, content: string) {
+        return sendEvent('info-provided', {
+            roomCode: this.roomCode,
+            type,
+            content
+        })
+    }
+
+    async judgeDecision(correct: boolean, correctSpelling?: string, typedSpelling?: string) {
+        return sendEvent('judge-decision', {
+            roomCode: this.roomCode,
+            correct,
+            correctSpelling,
+            typedSpelling
+        })
+    }
+
+    async revealWord(word: string, typedSpelling: string) {
+        return sendEvent('word-revealed', {
+            roomCode: this.roomCode,
+            word,
+            typedSpelling
+        })
+    }
 }
 
 // Hook for using real-time communication
 export const useSpellingBeeRealtime = (roomCode: string) => {
-  return new SpellingBeeRealtime(roomCode);
-};
+    return new SpellingBeeRealtime(roomCode)
+}
