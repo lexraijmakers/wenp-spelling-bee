@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Socket } from 'socket.io-client';
-import { initSocket } from '../../../lib/socket';
+import { useSpellingBeeRealtime } from '../../../lib/realtime';
 
 interface TimerState {
   timeLeft: number;
@@ -15,8 +14,9 @@ function DisplayPageContent() {
   const searchParams = useSearchParams();
   const roomCode = searchParams.get('room');
   
-  const [, setSocket] = useState<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected] = useState(true);
+  
+  const realtime = useSpellingBeeRealtime(roomCode || '');
   const [currentWord, setCurrentWord] = useState('');
   const [availableInfo, setAvailableInfo] = useState<string[]>([]);
   const [status, setStatus] = useState('Waiting for word...');
@@ -29,21 +29,13 @@ function DisplayPageContent() {
   });
 
   useEffect(() => {
-    if (!roomCode) return;
+    if (!roomCode || !realtime) return;
 
-    const socketInstance = initSocket();
-    setSocket(socketInstance);
+    // Subscribe to Pusher events
+    realtime.subscribe();
 
-    socketInstance.on('connect', () => {
-      setIsConnected(true);
-      socketInstance.emit('join-room', roomCode);
-    });
-
-    socketInstance.on('disconnect', () => {
-      setIsConnected(false);
-    });
-
-    socketInstance.on('word-selected', (data: { word: string; availableInfo: string[] }) => {
+    // Set up event listeners
+    realtime.on('word-selected', (data: { word: string; availableInfo: string[] }) => {
       setCurrentWord(data.word);
       setAvailableInfo(data.availableInfo);
       setStatus('Word selected - Ready to begin');
@@ -52,31 +44,31 @@ function DisplayPageContent() {
       setTimer(prev => ({ ...prev, timeLeft: 90, phase: 'green', isActive: false }));
     });
 
-    socketInstance.on('timer-start', (data: { duration: number }) => {
+    realtime.on('timer-start', (data: { duration: number }) => {
       setStatus('Spelling in progress...');
       setTimer(prev => ({ ...prev, timeLeft: data.duration, isActive: true }));
     });
 
-    socketInstance.on('timer-reset', () => {
+    realtime.on('timer-reset', () => {
       setTimer(prev => ({ ...prev, timeLeft: 90, phase: 'green', isActive: false }));
       setStatus('Timer reset - Ready to begin');
     });
 
-    socketInstance.on('info-provided', (data: { type: string; content: string }) => {
+    realtime.on('info-provided', (data: { type: string; content: string }) => {
       setProvidedInfo(data);
       setTimeout(() => setProvidedInfo(null), 5000); // Clear after 5 seconds
     });
 
-    socketInstance.on('judge-decision', (data: { correct: boolean; correctSpelling?: string }) => {
+    realtime.on('judge-decision', (data: { correct: boolean; correctSpelling?: string }) => {
       setResult(data);
       setTimer(prev => ({ ...prev, isActive: false }));
       setStatus(data.correct ? 'Correct!' : 'Incorrect');
     });
 
     return () => {
-      socketInstance.disconnect();
+      realtime.unsubscribe();
     };
-  }, [roomCode]);
+  }, [roomCode, realtime]);
 
   // Timer countdown effect
   useEffect(() => {

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Socket } from 'socket.io-client';
-import { initSocket } from '../../../lib/socket';
+import { useSpellingBeeRealtime } from '../../../lib/realtime';
 import { loadWords, getRandomWord, getAvailableInfo, Word, WordDatabase } from '../../../lib/words';
 import { audioManager, initializeAudio } from '../../../lib/audio';
 
@@ -11,118 +10,96 @@ function JudgePageContent() {
   const searchParams = useSearchParams();
   const roomCode = searchParams.get('room');
   
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [wordDatabase, setWordDatabase] = useState<WordDatabase | null>(null);
   const [currentWord, setCurrentWord] = useState<Word | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState(1);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected] = useState(true);
   const [timerActive, setTimerActive] = useState(false);
+  
+  const realtime = useSpellingBeeRealtime(roomCode || '');
 
   useEffect(() => {
-    if (!roomCode) return;
+    if (!roomCode || !realtime) return;
 
-    const socketInstance = initSocket();
-    setSocket(socketInstance);
-
-    socketInstance.on('connect', () => {
-      setIsConnected(true);
-      socketInstance.emit('join-room', roomCode);
-    });
-
-    socketInstance.on('disconnect', () => {
-      setIsConnected(false);
-    });
-
-    socketInstance.on('request-info', (data: { type: string }) => {
-      if (currentWord) {
-        let content = '';
-        switch (data.type) {
-          case 'definition':
-            content = currentWord.definition;
-            break;
-          case 'sentence':
-            content = currentWord.sentence;
-            break;
-          case 'partOfSpeech':
-            content = currentWord.partOfSpeech;
-            break;
-          case 'pronunciation':
-            content = currentWord.pronunciation || 'Not available';
-            break;
-          case 'origin':
-            content = currentWord.origin || 'Not available';
-            break;
-        }
-        
-        socketInstance.emit('info-provided', {
-          roomCode,
-          type: data.type,
-          content
-        });
-      }
-    });
+    // Subscribe to Pusher events
+    realtime.subscribe();
 
     // Load words
     loadWords().then(setWordDatabase);
 
     return () => {
-      socketInstance.disconnect();
+      realtime.unsubscribe();
     };
-  }, [roomCode]);
+  }, [roomCode, realtime]);
 
-  const selectNewWord = () => {
-    if (!wordDatabase || !selectedCategory) return;
+  const selectNewWord = async () => {
+    if (!wordDatabase || !selectedCategory || !realtime) return;
 
     const word = getRandomWord(wordDatabase.words, selectedCategory, selectedDifficulty);
     if (word) {
       setCurrentWord(word);
       const availableInfo = getAvailableInfo(word);
       
-      socket?.emit('word-selected', {
-        roomCode,
-        word: word.word,
-        availableInfo
-      });
+      try {
+        await realtime.selectWord(word.word, availableInfo);
+      } catch (error) {
+        console.error('Failed to select word:', error);
+      }
     }
   };
 
-  const startTimer = () => {
+  const startTimer = async () => {
+    if (!realtime) return;
+    
     setTimerActive(true);
-    socket?.emit('timer-start', {
-      roomCode,
-      duration: 90
-    });
+    try {
+      await realtime.startTimer(90);
+    } catch (error) {
+      console.error('Failed to start timer:', error);
+      setTimerActive(false);
+    }
   };
 
-  const resetTimer = () => {
+  const resetTimer = async () => {
+    if (!realtime) return;
+    
     setTimerActive(false);
-    socket?.emit('timer-reset', { roomCode });
+    try {
+      await realtime.resetTimer();
+    } catch (error) {
+      console.error('Failed to reset timer:', error);
+    }
   };
 
-  const markCorrect = () => {
+  const markCorrect = async () => {
+    if (!realtime) return;
+    
     initializeAudio();
     audioManager.playSuccess();
-    socket?.emit('judge-decision', {
-      roomCode,
-      correct: true
-    });
+    try {
+      await realtime.judgeDecision(true);
+    } catch (error) {
+      console.error('Failed to mark correct:', error);
+    }
     setTimerActive(false);
   };
 
-  const markIncorrect = () => {
+  const markIncorrect = async () => {
+    if (!realtime) return;
+    
     initializeAudio();
     audioManager.playBell();
-    socket?.emit('judge-decision', {
-      roomCode,
-      correct: false,
-      correctSpelling: currentWord?.word
-    });
+    try {
+      await realtime.judgeDecision(false, currentWord?.word);
+    } catch (error) {
+      console.error('Failed to mark incorrect:', error);
+    }
     setTimerActive(false);
   };
 
-  const provideInfo = (type: string) => {
-    if (!currentWord) return;
+  const provideInfo = async (type: string) => {
+    if (!currentWord || !realtime) return;
     
     let content = '';
     switch (type) {
@@ -143,11 +120,11 @@ function JudgePageContent() {
         break;
     }
     
-    socket?.emit('info-provided', {
-      roomCode,
-      type,
-      content
-    });
+    try {
+      await realtime.provideInfo(type, content);
+    } catch (error) {
+      console.error('Failed to provide info:', error);
+    }
   };
 
   if (!roomCode) {

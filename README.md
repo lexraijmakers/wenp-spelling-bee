@@ -1,250 +1,261 @@
 # Dutch Spelling Bee Web Application
 
-A professional spelling bee application built with Next.js, following the official Scripps National Spelling Bee rules. This application provides a complete solution for conducting spelling bee competitions with Dutch words.
+A real-time spelling bee application built with Next.js and Pusher, designed for Dutch spelling contests following Scripps National Spelling Bee rules.
 
-## Features
+## 🎯 Features
 
-### Core Functionality
-- **Two-Interface System**: Separate judge and display interfaces
-- **Real-time Communication**: Socket.io for instant synchronization
-- **Authentic Rules**: Based on Scripps National Spelling Bee regulations
-- **Dutch Word Database**: Comprehensive collection of Dutch words with definitions
-- **Audio Feedback**: Sound effects for correct/incorrect answers
-- **Timer System**: 90-second countdown with visual phases (green/yellow/red)
+- **Real-time synchronization** between judge and display interfaces
+- **Timer system** with visual phases (green/yellow/red)
+- **Word information system** (definitions, sentences, pronunciation, etc.)
+- **Audio feedback** for correct/incorrect answers
+- **Room-based sessions** for multiple concurrent games
+- **Responsive design** for various screen sizes
 
-### Judge Interface
-- Word selection by category and difficulty level
-- Real-time timer control (start/reset)
-- Information provision buttons (definition, sentence, pronunciation, etc.)
-- Correct/incorrect decision marking
-- Audio feedback integration
+## 🏗️ Architecture
 
-### Display Interface
-- Large, clear word display for contestants
-- Timer with color-coded phases
-- Available information indicators
-- Real-time feedback display
-- Contestant instruction panel
+### Two Main Interfaces
 
-## Technology Stack
+1. **Judge Interface** (`/judge?room=XXXX`)
+   - Word selection and management
+   - Timer controls
+   - Information provision buttons
+   - Scoring decisions
 
-- **Framework**: Next.js 15.4.5 with TypeScript
-- **Styling**: Tailwind CSS
-- **Real-time Communication**: Socket.io
-- **Audio**: Web Audio API
-- **Deployment**: Vercel-ready
+2. **Display Interface** (`/display?room=XXXX`)
+   - Contestant view (projected screen)
+   - Timer display with color phases
+   - Information display
+   - Results announcement
 
-## Project Structure
+### Real-time Communication
 
-```
-wp-spelling-bee/
-├── src/
-│   ├── app/
-│   │   ├── page.tsx              # Home page with session management
-│   │   ├── judge/page.tsx        # Judge interface
-│   │   ├── display/page.tsx      # Display interface
-│   │   └── api/socket/route.ts   # Socket.io API route
-├── lib/
-│   ├── words.ts                  # Word management utilities
-│   ├── socket.ts                 # Socket.io client configuration
-│   └── audio.ts                  # Audio management
-├── public/
-│   └── dutch-words.json          # Dutch word database
-└── README.md
-```
+- **Pusher Channels** for WebSocket communication
+- **API Routes** for event triggering
+- **Room isolation** using unique room codes
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 18+ 
-- Yarn or npm
+- Yarn package manager
+- Pusher account (free tier available)
 
 ### Installation
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd wp-spelling-bee
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd wp-spelling-bee
+   ```
+
+2. **Install dependencies**
+   ```bash
+   yarn install
+   ```
+
+3. **Set up Pusher**
+   - Create account at [pusher.com](https://pusher.com)
+   - Choose "Channels" (not Beams)
+   - Create new app with React + Node.js stack
+
+4. **Configure environment variables**
+   
+   Create `.env.local` file:
+   ```env
+   # Pusher Configuration
+   PUSHER_APP_ID=your_app_id
+   PUSHER_KEY=your_key
+   PUSHER_SECRET=your_secret
+   PUSHER_CLUSTER=your_cluster
+
+   # Next.js Public Variables (accessible in browser)
+   NEXT_PUBLIC_PUSHER_KEY=your_key
+   NEXT_PUBLIC_PUSHER_CLUSTER=your_cluster
+   ```
+
+5. **Run development server**
+   ```bash
+   yarn dev
+   ```
+
+6. **Open application**
+   - Navigate to `http://localhost:3000`
+   - Create a session and get room code
+   - Open judge interface: `/judge?room=YOUR_ROOM_CODE`
+   - Open display interface: `/display?room=YOUR_ROOM_CODE`
+
+## 📖 How to Use
+
+### Setting Up a Game
+
+1. **Start the application** and create a new session
+2. **Get the room code** (4-digit number)
+3. **Open two browser windows/tabs:**
+   - Judge interface (for the judge/moderator)
+   - Display interface (for projection to contestant)
+
+### Game Flow
+
+1. **Judge selects a word** from categories and difficulty levels
+2. **Judge starts the timer** (90 seconds total)
+3. **Contestant can request information** during green/yellow phases
+4. **Judge provides information** using dedicated buttons
+5. **Contestant spells the word** during any phase
+6. **Judge marks correct/incorrect** to end the round
+
+### Timer Phases
+
+- **Green (60s)**: All requests allowed
+- **Yellow (30s)**: Final requests period  
+- **Red (15s)**: Must begin spelling
+
+### Available Information
+
+- Word definition
+- Example sentence
+- Part of speech
+- Pronunciation guide
+- Language of origin
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+src/
+├── app/
+│   ├── api/pusher/          # Pusher API routes
+│   ├── display/             # Display interface
+│   ├── judge/               # Judge interface
+│   └── page.tsx             # Home page
+├── lib/
+│   ├── audio.ts             # Audio management
+│   ├── pusher.ts            # Pusher configuration
+│   ├── realtime.ts          # Real-time communication
+│   └── words.ts             # Word database management
 ```
 
-2. Install dependencies:
-```bash
-yarn install
-# or
-npm install
-```
+### API Routes
 
-3. Start the development server:
-```bash
-yarn dev
-# or
-npm run dev
-```
+- `POST /api/pusher/word-selected` - New word selection
+- `POST /api/pusher/timer-start` - Start timer
+- `POST /api/pusher/timer-reset` - Reset timer
+- `POST /api/pusher/info-provided` - Provide word information
+- `POST /api/pusher/judge-decision` - Final decision
 
-4. Open your browser and navigate to `http://localhost:3000`
+### Event System
 
-## Usage
+All events use Pusher channels with format: `spelling-bee-{roomCode}`
 
-### Setting Up a Session
+**Events:**
+- `word-selected` - New word chosen
+- `timer-start` - Timer started
+- `timer-reset` - Timer reset
+- `info-provided` - Information provided
+- `judge-decision` - Round completed
 
-1. **Judge Setup**:
-   - Click "Create New Session" on the home page
-   - Note the 4-digit room code generated
-   - You'll be redirected to the judge interface
-
-2. **Display Setup**:
-   - On a separate device/browser, enter the room code
-   - Click "Join as Display"
-   - The display interface will connect to the judge's session
-
-### Conducting a Spelling Bee
-
-1. **Word Selection** (Judge):
-   - Select a category from the dropdown
-   - Choose difficulty level (1-5)
-   - Click "Get New Word"
-
-2. **Starting the Round**:
-   - Click "Start Timer" to begin the 90-second countdown
-   - The display will show the timer with color phases:
-     - **Green (60s)**: Information requests allowed
-     - **Yellow (30s)**: Final requests period
-     - **Red (15s)**: Must begin spelling
-
-3. **Providing Information** (Judge):
-   - Use the information buttons to provide:
-     - Definition
-     - Sentence usage
-     - Part of speech
-     - Pronunciation guide
-     - Language origin
-
-4. **Making Decisions** (Judge):
-   - Click "✓ Correct" for correct spelling
-   - Click "✗ Incorrect" for wrong spelling
-   - Audio feedback will play automatically
-
-## Word Database
-
-The application includes a comprehensive Dutch word database with:
-- Multiple categories (animals, food, technology, etc.)
-- Difficulty levels (1-5)
-- Complete definitions
-- Example sentences
-- Parts of speech
-- Pronunciation guides
-- Etymology information
-
-### Adding New Words
-
-Edit `public/dutch-words.json` to add new words:
-
-```json
-{
-  "word": "voorbeeld",
-  "definition": "Een ding dat dient ter navolging of ter verduidelijking",
-  "sentence": "Dit is een goed voorbeeld van moderne architectuur.",
-  "category": "algemeen",
-  "difficulty": 2,
-  "partOfSpeech": "zelfstandig naamwoord",
-  "pronunciation": "voor-beeld",
-  "origin": "Nederlands"
-}
-```
-
-## Deployment
+## 🚀 Deployment
 
 ### Vercel (Recommended)
 
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Deploy with default settings
-4. Vercel will automatically handle the build and deployment
+1. **Connect repository** to Vercel
+2. **Add environment variables** in Vercel dashboard
+3. **Deploy** - automatic builds on push
 
 ### Other Platforms
 
-The application can be deployed to any platform supporting Node.js:
+The application is serverless-ready and can be deployed on:
 - Netlify
 - Railway
-- Heroku
-- DigitalOcean App Platform
+- AWS Amplify
+- Any Node.js hosting platform
 
-## Development
+## 📝 Word Database
 
-### Available Scripts
+Words are stored in `lib/words.ts` with the following structure:
 
-```bash
-yarn dev          # Start development server
-yarn build        # Build for production
-yarn start        # Start production server
-yarn lint         # Run ESLint
+```typescript
+interface Word {
+  word: string;
+  definition: string;
+  sentence: string;
+  partOfSpeech: string;
+  category: string;
+  difficulty: number; // 1-5
+  pronunciation?: string;
+  origin?: string;
+}
 ```
 
-### Socket.io Events
+### Adding Words
 
-The application uses the following Socket.io events:
+Edit `lib/words.ts` to add new words to the database. Words are organized by:
+- **Categories**: Different subject areas
+- **Difficulty**: 1 (easy) to 5 (very hard)
 
-**Room Management**:
-- `join-room`: Join a spelling bee session
-- `room-joined`: Confirmation of room join
+## 🎵 Audio System
 
-**Word Management**:
-- `word-selected`: New word selected by judge
-- `request-info`: Request word information
-- `info-provided`: Information provided by judge
+The application includes audio feedback:
+- **Success sound** for correct answers
+- **Bell sound** for incorrect answers
+- **Audio initialization** on first user interaction
 
-**Timer Control**:
-- `timer-start`: Start the countdown timer
-- `timer-reset`: Reset the timer
+## 🔧 Configuration
 
-**Decisions**:
-- `judge-decision`: Final correct/incorrect decision
+### Pusher Settings
 
-## Rules (Scripps National Spelling Bee)
+- **Free tier limits**: 200k messages/day, 100 concurrent connections
+- **Channels**: Use public channels for this application
+- **Cluster**: Choose closest to your users (eu, us-east-1, etc.)
 
-The application follows official Scripps rules:
+### Timer Configuration
 
-1. **Time Limit**: 90 seconds per word
-2. **Information Requests**: Contestants may request:
-   - Word repetition
-   - Definition
-   - Part of speech
-   - Language of origin
-   - Sentence usage
-   - Pronunciation guide
+Default timer settings in `lib/realtime.ts`:
+- Total time: 90 seconds
+- Yellow phase: Last 30 seconds
+- Red phase: Last 15 seconds
 
-3. **Timer Phases**:
-   - **Green Light (60s)**: All requests allowed
-   - **Yellow Light (30s)**: Final opportunity for requests
-   - **Red Light (15s)**: Must begin spelling, no more requests
+## 🐛 Troubleshooting
 
-4. **Spelling**: Must be letter-by-letter, clearly pronounced
+### Common Issues
 
-## Contributing
+1. **Real-time not working**
+   - Check Pusher credentials in `.env.local`
+   - Verify room codes match between interfaces
+   - Check browser console for errors
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. **Build errors**
+   - Run `yarn build` to check for TypeScript errors
+   - Ensure all environment variables are set
 
-## License
+3. **Audio not playing**
+   - Audio requires user interaction to initialize
+   - Check browser audio permissions
+
+### Debug Mode
+
+Enable Pusher logging in development:
+```javascript
+// In browser console
+Pusher.logToConsole = true;
+```
+
+## 📄 License
 
 This project is licensed under the MIT License.
 
-## Support
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Make changes
+4. Test thoroughly
+5. Submit pull request
+
+## 📞 Support
 
 For issues and questions:
-1. Check the existing issues on GitHub
-2. Create a new issue with detailed description
-3. Include steps to reproduce any bugs
-
-## Future Enhancements
-
-Planned features for future versions:
-- Tournament management
-- Leaderboards and scoring
-- Multiple language support
-- Advanced statistics
-- Mobile app versions
-- Offline mode support
+- Check the troubleshooting section
+- Review Pusher documentation
+- Create an issue in the repository
