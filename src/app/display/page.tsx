@@ -15,7 +15,7 @@ function DisplayPageContent() {
   const searchParams = useSearchParams();
   const roomCode = searchParams.get('room');
   
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [currentWord, setCurrentWord] = useState('');
   const [availableInfo, setAvailableInfo] = useState<string[]>([]);
