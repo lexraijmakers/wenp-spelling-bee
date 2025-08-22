@@ -33,7 +33,6 @@ export default function Home() {
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
                         Wauw & Pittigman Spelling Bee
                     </h1>
-                    <p className="text-gray-600">Authentic Scripps-style spelling competition</p>
                 </div>
 
                 <div className="space-y-6">
@@ -87,11 +86,6 @@ export default function Home() {
                             </button>
                         </div>
                     </div>
-                </div>
-
-                <div className="mt-8 text-center text-sm text-gray-500">
-                    <p>Judge creates session • Display joins with room code</p>
-                    <p className="mt-1">Following official Scripps National Spelling Bee rules</p>
                 </div>
             </div>
         </div>

@@ -2,7 +2,6 @@
 
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
-import { audioManager, initializeAudio } from '../../../lib/audio'
 import { useSpellingBeeRealtime } from '../../../lib/realtime'
 import { DEFAULT_TIMER_CONFIG } from '../../../lib/timer-config'
 import { getAvailableInfo, getRandomWord, loadWords, Word, WordDatabase } from '../../../lib/words'
@@ -90,8 +89,6 @@ function JudgePageContent() {
     const markCorrect = async () => {
         if (!realtime) return
 
-        initializeAudio()
-        audioManager.playSuccess()
         setWordRevealed(true)
         try {
             await realtime.judgeDecision(true, undefined, typedSpelling)
@@ -104,8 +101,6 @@ function JudgePageContent() {
     const markIncorrect = async () => {
         if (!realtime) return
 
-        initializeAudio()
-        audioManager.playBell()
         setWordRevealed(true)
         try {
             await realtime.judgeDecision(false, currentWord?.word, typedSpelling)
