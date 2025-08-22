@@ -1,9 +1,9 @@
 'use client'
 
+import { useSpellingBeeRealtime } from 'lib/realtime'
+import { DEFAULT_TIMER_CONFIG, getTimerPhase } from 'lib/timer-config'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
-import { useSpellingBeeRealtime } from '../../../lib/realtime'
-import { DEFAULT_TIMER_CONFIG, getTimerPhase } from '../../../lib/timer-config'
 
 interface TimerState {
     timeLeft: number
@@ -14,9 +14,7 @@ interface TimerState {
 function DisplayPageContent() {
     const searchParams = useSearchParams()
     const roomCode = searchParams.get('room')
-
     const [isConnected] = useState(true)
-
     const realtime = useSpellingBeeRealtime(roomCode || '')
     const [currentWord, setCurrentWord] = useState('')
     const [availableInfo, setAvailableInfo] = useState<string[]>([])

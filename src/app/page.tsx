@@ -1,8 +1,8 @@
 'use client'
 
+import { generateRoomCode } from 'lib/words'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { generateRoomCode } from '../../lib/words'
 
 export default function Home() {
     const [roomCode, setRoomCode] = useState('')

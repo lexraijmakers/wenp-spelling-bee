@@ -1,10 +1,10 @@
 'use client'
 
+import { useSpellingBeeRealtime } from 'lib/realtime'
+import { DEFAULT_TIMER_CONFIG } from 'lib/timer-config'
+import { getAvailableInfo, getRandomWord, loadWords, Word, WordDatabase } from 'lib/words'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
-import { useSpellingBeeRealtime } from '../../../lib/realtime'
-import { DEFAULT_TIMER_CONFIG } from '../../../lib/timer-config'
-import { getAvailableInfo, getRandomWord, loadWords, Word, WordDatabase } from '../../../lib/words'
 
 function JudgePageContent() {
     const searchParams = useSearchParams()

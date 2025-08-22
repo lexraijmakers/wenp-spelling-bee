@@ -1,5 +1,5 @@
+import { triggerEvent } from 'lib/pusher'
 import { NextRequest, NextResponse } from 'next/server'
-import { triggerEvent } from '../../../../../lib/pusher'
 
 export async function POST(request: NextRequest) {
     try {
