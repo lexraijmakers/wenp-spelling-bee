@@ -1,5 +1,16 @@
 'use client'
 
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '@/components/ui/select'
 import { useSpellingBeeRealtime } from 'lib/realtime'
 import { DEFAULT_TIMER_CONFIG } from 'lib/timer-config'
 import { getAvailableInfo, getRandomWord, loadWords, Word, WordDatabase } from 'lib/words'
@@ -99,148 +110,203 @@ function JudgePageContent() {
 
     if (!roomCode) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold text-red-600">No Room Code</h1>
-                    <p className="text-gray-600">Please create a session first.</p>
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <Card className="w-[400px]">
+                    <CardHeader>
+                        <CardTitle className="text-center text-destructive">No Room Code</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-center text-muted-foreground">
+                            Please create a session first.
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-background p-6">
+            <div className="max-w-6xl mx-auto space-y-6">
                 {/* Header */}
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <div className="flex justify-between items-center">
-                        <h1 className="text-2xl font-bold text-gray-900">Judge Interface</h1>
-                        <div className="flex items-center space-x-4">
-                            <div className="text-sm">
-                                <span className="text-gray-600">Room:</span>
-                                <span className="font-mono text-lg ml-2 text-green-600">
-                                    {roomCode}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-center text-3xl font-bold">
+                            Judge Interface
+                        </CardTitle>
+                        <div className="flex justify-center items-center gap-4 text-sm">
+                            <span>
+                                Room: <Badge variant="outline">{roomCode}</Badge>
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <div
+                                    className={`w-2 h-2 rounded-full ${
+                                        isConnected ? 'bg-green-500' : 'bg-red-500'
+                                    }`}
+                                />
+                                <span className={isConnected ? 'text-green-600' : 'text-red-600'}>
+                                    {isConnected ? 'Connected' : 'Disconnected'}
                                 </span>
                             </div>
-
-                            <div
-                                className={`w-3 h-3 rounded-full ${
-                                    isConnected ? 'bg-green-500' : 'bg-red-500'
-                                }`}
-                            ></div>
                         </div>
-                    </div>
-                </div>
+                    </CardHeader>
+                </Card>
 
                 {/* Word Selection */}
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-900">Word Selection</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-900 mb-2">
-                                Difficulty
-                            </label>
-
-                            <select
-                                value={selectedDifficulty}
-                                onChange={(e) => setSelectedDifficulty(Number(e.target.value))}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-900"
-                            >
-                                {[1, 2, 3, 4, 5].map((level) => (
-                                    <option key={level} value={level}>
-                                        Level {level}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="flex items-end">
-                            <button
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Word Selection</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                            <div className="space-y-2">
+                                <Label htmlFor="difficulty">Difficulty Level</Label>
+                                <Select
+                                    value={selectedDifficulty.toString()}
+                                    onValueChange={(value) => setSelectedDifficulty(Number(value))}
+                                >
+                                    <SelectTrigger id="difficulty">
+                                        <SelectValue placeholder="Select difficulty" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[1, 2, 3, 4, 5].map((level) => (
+                                            <SelectItem key={level} value={level.toString()}>
+                                                Level {level}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Button
                                 onClick={selectNewWord}
                                 disabled={!wordDatabase}
-                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                                className="w-full"
                             >
                                 Get New Word
-                            </button>
+                            </Button>
                         </div>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
 
                 {/* Current Word */}
                 {currentWord && (
-                    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-900">Current Word</h2>
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                            <div className="text-3xl font-bold text-center text-gray-900 mb-2">
-                                {currentWord.word}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Current Word</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-center mb-6">
+                                <div className="text-4xl font-bold mb-2">{currentWord.word}</div>
+                                <Badge variant="secondary">Level {currentWord.difficulty}</Badge>
                             </div>
 
-                            <div className="text-center text-gray-600">
-                                Level {currentWord.difficulty}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label className="text-base font-semibold">Definition</Label>
+                                    <p className="text-muted-foreground">
+                                        {currentWord.definition}
+                                    </p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-base font-semibold">
+                                        Example Sentence
+                                    </Label>
+                                    <p className="text-muted-foreground">{currentWord.sentence}</p>
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <strong className="text-gray-900">Definition:</strong>{' '}
-                                <span className="text-gray-700">{currentWord.definition}</span>
-                            </div>
-
-                            <div>
-                                <strong className="text-gray-900">Sentence:</strong>{' '}
-                                <span className="text-gray-700">{currentWord.sentence}</span>
-                            </div>
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
                 )}
 
                 {/* Controls */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Timer and Decisions */}
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                            Timer & Decisions
-                        </h3>
-
-                        <div className="space-y-3">
-                            <div className="flex space-x-2">
-                                <button
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Timer Controls */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Timer Controls</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <Button
                                     onClick={startTimer}
                                     disabled={!currentWord || timerActive}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-2 px-4 rounded transition-colors"
+                                    variant="default"
+                                    className="bg-green-600 hover:bg-green-700"
                                 >
                                     Start Timer
-                                </button>
-
-                                <button
+                                </Button>
+                                <Button
                                     onClick={resetTimer}
                                     disabled={!timerActive}
-                                    className="flex-1 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-400 text-white py-2 px-4 rounded transition-colors"
+                                    variant="outline"
+                                    className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
                                 >
                                     Reset Timer
-                                </button>
+                                </Button>
                             </div>
+                            {timerActive && (
+                                <div className="text-center">
+                                    <Badge variant="outline" className="text-sm">
+                                        Timer is running
+                                    </Badge>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                            <div className="flex space-x-2">
-                                <button
+                    {/* Judge Decisions */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Judge Decision</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <Button
                                     onClick={markCorrect}
                                     disabled={!currentWord}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 px-4 rounded font-medium transition-colors"
+                                    variant="default"
+                                    className="bg-green-600 hover:bg-green-700 h-12"
                                 >
                                     ✓ Correct
-                                </button>
-
-                                <button
+                                </Button>
+                                <Button
                                     onClick={markIncorrect}
                                     disabled={!currentWord}
-                                    className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white py-3 px-4 rounded font-medium transition-colors"
+                                    variant="destructive"
+                                    className="h-12"
                                 >
                                     ✗ Incorrect
-                                </button>
+                                </Button>
                             </div>
-                        </div>
-                    </div>
+                            <p className="text-xs text-muted-foreground text-center">
+                                Decision will automatically reveal the word to participants
+                            </p>
+                        </CardContent>
+                    </Card>
                 </div>
+
+                {/* Information Panel */}
+                {currentWord && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Quick Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                    💡 You can provide definition or example sentence during
+                                    spelling
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                    ⏱️ Timer phases: Green → Yellow → Red
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                    🎯 Marking correct/incorrect reveals the word automatically
+                                </Badge>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     )
@@ -251,10 +317,14 @@ export default function JudgePage() {
         <Suspense
             fallback={
                 <div className="min-h-screen flex items-center justify-center">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading judge interface...</p>
-                    </div>
+                    <Card className="w-[300px]">
+                        <CardContent className="p-6">
+                            <div className="text-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                                <p className="text-muted-foreground">Loading judge interface...</p>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             }
         >
