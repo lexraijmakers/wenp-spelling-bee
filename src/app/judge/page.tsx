@@ -15,8 +15,6 @@ function JudgePageContent() {
     const [selectedDifficulty, setSelectedDifficulty] = useState(1)
     const [isConnected] = useState(true)
     const [timerActive, setTimerActive] = useState(false)
-    const [typedSpelling, setTypedSpelling] = useState('')
-    const [wordRevealed, setWordRevealed] = useState(false)
 
     const realtime = useSpellingBeeRealtime(roomCode || '')
 
@@ -40,8 +38,6 @@ function JudgePageContent() {
         const word = getRandomWord(wordDatabase.words, selectedDifficulty)
         if (word) {
             setCurrentWord(word)
-            setTypedSpelling('')
-            setWordRevealed(false)
             const availableInfo = getAvailableInfo(word)
 
             try {
@@ -56,6 +52,7 @@ function JudgePageContent() {
         if (!realtime) return
 
         setTimerActive(true)
+
         try {
             await realtime.startTimer(DEFAULT_TIMER_CONFIG.totalTime)
         } catch (error) {
@@ -68,6 +65,7 @@ function JudgePageContent() {
         if (!realtime) return
 
         setTimerActive(false)
+
         try {
             await realtime.resetTimer()
         } catch (error) {
@@ -75,59 +73,28 @@ function JudgePageContent() {
         }
     }
 
-    const revealWord = async () => {
+    const markCorrect = async () => {
         if (!realtime || !currentWord) return
 
-        setWordRevealed(true)
         try {
-            await realtime.revealWord(currentWord.word, typedSpelling)
-        } catch (error) {
-            console.error('Failed to reveal word:', error)
-        }
-    }
-
-    const markCorrect = async () => {
-        if (!realtime) return
-
-        setWordRevealed(true)
-        try {
-            await realtime.judgeDecision(true, undefined, typedSpelling)
+            await realtime.judgeDecision(true, currentWord.word)
         } catch (error) {
             console.error('Failed to mark correct:', error)
         }
+
         setTimerActive(false)
     }
 
     const markIncorrect = async () => {
-        if (!realtime) return
+        if (!realtime || !currentWord) return
 
-        setWordRevealed(true)
         try {
-            await realtime.judgeDecision(false, currentWord?.word, typedSpelling)
+            await realtime.judgeDecision(false, currentWord.word)
         } catch (error) {
             console.error('Failed to mark incorrect:', error)
         }
+
         setTimerActive(false)
-    }
-
-    const provideInfo = async (type: string) => {
-        if (!currentWord || !realtime) return
-
-        let content = ''
-        switch (type) {
-            case 'definition':
-                content = currentWord.definition
-                break
-            case 'sentence':
-                content = currentWord.sentence
-                break
-        }
-
-        try {
-            await realtime.provideInfo(type, content)
-        } catch (error) {
-            console.error('Failed to provide info:', error)
-        }
     }
 
     if (!roomCode) {
@@ -227,55 +194,8 @@ function JudgePageContent() {
                     </div>
                 )}
 
-                {/* Typing Input */}
-                {currentWord && (
-                    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                            Type Along with Contestant
-                        </h3>
-
-                        <input
-                            type="text"
-                            value={typedSpelling}
-                            onChange={(e) => setTypedSpelling(e.target.value)}
-                            placeholder="Type the spelling as the contestant says it..."
-                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-lg font-mono text-gray-900"
-                        />
-
-                        <div className="mt-2 text-sm text-gray-600">
-                            Correct spelling:{' '}
-                            <span className="font-mono font-bold">{currentWord.word}</span>
-                        </div>
-                    </div>
-                )}
-
                 {/* Controls */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Information Buttons */}
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                            Provide Information
-                        </h3>
-
-                        <div className="grid grid-cols-1 gap-2">
-                            <button
-                                onClick={() => provideInfo('definition')}
-                                disabled={!currentWord}
-                                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded text-sm transition-colors font-medium"
-                            >
-                                Definition
-                            </button>
-
-                            <button
-                                onClick={() => provideInfo('sentence')}
-                                disabled={!currentWord}
-                                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded text-sm transition-colors font-medium"
-                            >
-                                Sentence
-                            </button>
-                        </div>
-                    </div>
-
                     {/* Timer and Decisions */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <h3 className="text-lg font-semibold mb-4 text-gray-900">
@@ -300,14 +220,6 @@ function JudgePageContent() {
                                     Reset Timer
                                 </button>
                             </div>
-
-                            <button
-                                onClick={revealWord}
-                                disabled={!currentWord || wordRevealed}
-                                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white py-2 px-4 rounded transition-colors"
-                            >
-                                Reveal Word
-                            </button>
 
                             <div className="flex space-x-2">
                                 <button

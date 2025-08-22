@@ -3,15 +3,16 @@ import { triggerEvent } from '../../../../../lib/pusher'
 
 export async function POST(request: NextRequest) {
     try {
-        const { roomCode, correct, correctSpelling } = await request.json()
+        const { roomCode, correct, word } = await request.json()
 
         if (!roomCode || typeof correct !== 'boolean') {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
+        // Trigger judge decision event
         await triggerEvent(roomCode, 'judge-decision', {
             correct,
-            correctSpelling
+            word
         })
 
         return NextResponse.json({ success: true })

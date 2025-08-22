@@ -26,18 +26,9 @@ export interface SpellingBeeEvents {
         duration: number
     }
     'timer-reset': Record<string, never>
-    'info-provided': {
-        type: string
-        content: string
-    }
     'judge-decision': {
         correct: boolean
-        correctSpelling?: string
-        typedSpelling?: string
-    }
-    'word-revealed': {
         word: string
-        typedSpelling: string
     }
 }
 

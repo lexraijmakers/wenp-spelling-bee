@@ -21,15 +21,12 @@ function DisplayPageContent() {
     const [currentWord, setCurrentWord] = useState('')
     const [availableInfo, setAvailableInfo] = useState<string[]>([])
     const [status, setStatus] = useState('Wachten op woord...')
-    const [providedInfo, setProvidedInfo] = useState<{ type: string; content: string } | null>(null)
     const [result, setResult] = useState<{
         correct: boolean
         correctSpelling?: string
-        typedSpelling?: string
     } | null>(null)
     const [revealedWord, setRevealedWord] = useState<{
         word: string
-        typedSpelling: string
     } | null>(null)
     const [timer, setTimer] = useState<TimerState>({
         timeLeft: DEFAULT_TIMER_CONFIG.totalTime,
@@ -48,7 +45,6 @@ function DisplayPageContent() {
             setCurrentWord(data.word)
             setAvailableInfo(data.availableInfo)
             setStatus('Woord geselecteerd - Klaar om te beginnen')
-            setProvidedInfo(null)
             setResult(null)
             setRevealedWord(null)
             setTimer((prev) => ({
@@ -74,21 +70,10 @@ function DisplayPageContent() {
             setStatus('Timer gereset - Klaar om te beginnen')
         })
 
-        realtime.on('info-provided', (data: { type: string; content: string }) => {
-            setProvidedInfo(data)
-            setTimeout(() => setProvidedInfo(null), 5000) // Clear after 5 seconds
-        })
-
-        realtime.on(
-            'judge-decision',
-            (data: { correct: boolean; correctSpelling?: string; typedSpelling?: string }) => {
-                setResult(data)
-                setTimer((prev) => ({ ...prev, isActive: false }))
-                setStatus(data.correct ? 'Correct!' : 'Incorrect')
-            }
-        )
-
-        realtime.on('word-revealed', (data: { word: string; typedSpelling: string }) => {
+        realtime.on('judge-decision', (data: { correct: boolean; word: string }) => {
+            setResult(data)
+            setTimer((prev) => ({ ...prev, isActive: false }))
+            setStatus(data.correct ? 'Correct!' : 'Incorrect')
             setRevealedWord(data)
         })
 
@@ -173,72 +158,106 @@ function DisplayPageContent() {
                     </div>
                 </div>
 
-                {/* Giant Timer Clock */}
+                {/* Giant Timer Clock with Available Info */}
                 <div className="flex-1 flex items-center justify-center">
-                    <div className="relative">
-                        {/* Clock Circle */}
-                        <div
-                            className={`w-96 h-96 rounded-full border-8 flex items-center justify-center relative ${
-                                timer.phase === 'green'
-                                    ? 'border-green-400 bg-green-400/10'
-                                    : timer.phase === 'yellow'
-                                    ? 'border-yellow-400 bg-yellow-400/10'
-                                    : 'border-red-400 bg-red-400/10'
-                            } transition-all duration-1000`}
-                        >
-                            {/* Timer Display */}
-                            <div className="text-center">
-                                <div
-                                    className={`text-8xl font-mono font-bold mb-4 ${
-                                        timer.phase === 'green'
-                                            ? 'text-green-400'
-                                            : timer.phase === 'yellow'
-                                            ? 'text-yellow-400'
-                                            : 'text-red-400'
-                                    }`}
+                    <div className="flex items-center gap-12">
+                        {/* Timer Clock */}
+                        <div className="relative">
+                            {/* Clock Circle */}
+                            <div
+                                className={`w-96 h-96 rounded-full border-8 flex items-center justify-center relative ${
+                                    timer.phase === 'green'
+                                        ? 'border-green-400 bg-green-400/10'
+                                        : timer.phase === 'yellow'
+                                        ? 'border-yellow-400 bg-yellow-400/10'
+                                        : 'border-red-400 bg-red-400/10'
+                                } transition-all duration-1000`}
+                            >
+                                {/* Timer Display */}
+                                <div className="text-center">
+                                    <div
+                                        className={`text-8xl font-mono font-bold mb-4 ${
+                                            timer.phase === 'green'
+                                                ? 'text-green-400'
+                                                : timer.phase === 'yellow'
+                                                ? 'text-yellow-400'
+                                                : 'text-red-400'
+                                        }`}
+                                    >
+                                        {formatTime(timer.timeLeft)}
+                                    </div>
+                                </div>
+
+                                {/* Progress Ring */}
+                                <svg
+                                    className="absolute inset-0 w-full h-full -rotate-90"
+                                    viewBox="0 0 100 100"
                                 >
-                                    {formatTime(timer.timeLeft)}
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="45"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        className="text-white/20"
+                                    />
+
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="45"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        className={
+                                            timer.phase === 'green'
+                                                ? 'text-green-400'
+                                                : timer.phase === 'yellow'
+                                                ? 'text-yellow-400'
+                                                : 'text-red-400'
+                                        }
+                                        strokeDasharray={`${
+                                            (timer.timeLeft / DEFAULT_TIMER_CONFIG.totalTime) * 283
+                                        } 283`}
+                                        style={{
+                                            transition: 'stroke-dasharray 1s ease-in-out'
+                                        }}
+                                    />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Available Information */}
+                        {availableInfo.length > 0 && !revealedWord && !result && (
+                            <div className="bg-white/10 backdrop-blur rounded-2xl p-4 max-w-xs">
+                                <h3 className="text-lg font-bold mb-3 text-center text-yellow-300">
+                                    Beschikbare Informatie
+                                </h3>
+
+                                <div className="space-y-2">
+                                    {availableInfo.map((info) => (
+                                        <div
+                                            key={info}
+                                            className="bg-white/20 rounded-lg p-2 text-center"
+                                        >
+                                            <div className="text-sm font-medium">
+                                                {getInfoLabel(info)}
+                                            </div>
+
+                                            <div className="text-green-300 text-xs">
+                                                ✓ Beschikbaar
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="text-center mt-3 text-sm text-blue-200">
+                                    Vraag aan de jury
                                 </div>
                             </div>
-
-                            {/* Progress Ring */}
-                            <svg
-                                className="absolute inset-0 w-full h-full -rotate-90"
-                                viewBox="0 0 100 100"
-                            >
-                                <circle
-                                    cx="50"
-                                    cy="50"
-                                    r="45"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    className="text-white/20"
-                                />
-                                <circle
-                                    cx="50"
-                                    cy="50"
-                                    r="45"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    className={
-                                        timer.phase === 'green'
-                                            ? 'text-green-400'
-                                            : timer.phase === 'yellow'
-                                            ? 'text-yellow-400'
-                                            : 'text-red-400'
-                                    }
-                                    strokeDasharray={`${
-                                        (timer.timeLeft / DEFAULT_TIMER_CONFIG.totalTime) * 283
-                                    } 283`}
-                                    style={{
-                                        transition: 'stroke-dasharray 1s ease-in-out'
-                                    }}
-                                />
-                            </svg>
-                        </div>
+                        )}
                     </div>
                 </div>
 
@@ -252,105 +271,35 @@ function DisplayPageContent() {
                     )}
                 </div>
 
-                {/* Revealed Word */}
-                {revealedWord && (
-                    <div className="bg-white/20 backdrop-blur rounded-3xl p-8 mb-8 border-2 border-white/30">
-                        <h2 className="text-3xl font-bold mb-6 text-center text-yellow-300">
-                            Woord Onthuld
-                        </h2>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-xl">
-                            <div className="text-center">
-                                <h3 className="text-2xl font-bold mb-4 text-green-300">
-                                    Correct woord:
-                                </h3>
-
-                                <div className="text-4xl font-mono font-bold text-white bg-green-600/30 rounded-lg p-4">
-                                    {revealedWord.word}
-                                </div>
-                            </div>
-
-                            <div className="text-center">
-                                <h3 className="text-2xl font-bold mb-4 text-blue-300">
-                                    Getypte spelling:
-                                </h3>
-
-                                <div className="text-4xl font-mono font-bold text-white bg-blue-600/30 rounded-lg p-4">
-                                    {revealedWord.typedSpelling || '(geen spelling getypt)'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Available Information */}
-                {availableInfo.length > 0 && !revealedWord && (
-                    <div className="bg-white/10 backdrop-blur rounded-2xl p-6 mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-center">
-                            Beschikbare Informatie
-                        </h2>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            {availableInfo.map((info) => (
-                                <div key={info} className="bg-white/20 rounded-lg p-3 text-center">
-                                    <div className="text-lg font-medium">{getInfoLabel(info)}</div>
-                                    <div className="text-green-300 text-sm">✓ Beschikbaar</div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="text-center mt-4 text-lg text-blue-200">
-                            Je kunt om bovenstaande informatie vragen aan de jury
-                        </div>
-                    </div>
-                )}
-
-                {/* Provided Information */}
-                {providedInfo && (
-                    <div className="bg-yellow-500/20 border-2 border-yellow-400 rounded-2xl p-6 mb-8">
-                        <h3 className="text-2xl font-bold mb-2 text-yellow-300">
-                            {getInfoLabel(providedInfo.type)} Gegeven:
-                        </h3>
-
-                        <div className="text-xl">{providedInfo.content}</div>
-                    </div>
-                )}
-
-                {/* Result */}
-                {result && (
+                {/* Word Revealed with Result */}
+                {revealedWord && result && (
                     <div
                         className={`${
                             result.correct
                                 ? 'bg-green-500/20 border-green-400'
                                 : 'bg-red-500/20 border-red-400'
-                        } border-2 rounded-2xl p-8 mb-8`}
+                        } border-2 rounded-3xl p-8 mb-8 backdrop-blur`}
                     >
                         <div className="text-center">
                             <div
-                                className={`text-6xl font-bold mb-4 ${
+                                className={`text-6xl font-bold mb-6 ${
                                     result.correct ? 'text-green-300' : 'text-red-300'
                                 }`}
                             >
                                 {result.correct ? '✓ CORRECT!' : '✗ INCORRECT'}
                             </div>
 
-                            {!result.correct && result.correctSpelling && (
-                                <div className="text-2xl text-red-200">
-                                    Correcte spelling:{' '}
-                                    <span className="font-mono font-bold">
-                                        {result.correctSpelling}
-                                    </span>
-                                </div>
-                            )}
+                            <h2 className="text-3xl font-bold mb-4 text-yellow-300">
+                                Het woord was:
+                            </h2>
 
-                            {result.typedSpelling && (
-                                <div className="text-xl text-blue-200 mt-2">
-                                    Getypte spelling:{' '}
-                                    <span className="font-mono font-bold">
-                                        {result.typedSpelling}
-                                    </span>
-                                </div>
-                            )}
+                            <div
+                                className={`text-6xl font-mono font-bold text-white rounded-lg p-6 ${
+                                    result.correct ? 'bg-green-600/30' : 'bg-red-600/30'
+                                }`}
+                            >
+                                {revealedWord.word}
+                            </div>
                         </div>
                     </div>
                 )}

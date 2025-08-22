@@ -90,28 +90,11 @@ export class SpellingBeeRealtime {
         })
     }
 
-    async provideInfo(type: string, content: string) {
-        return sendEvent('info-provided', {
-            roomCode: this.roomCode,
-            type,
-            content
-        })
-    }
-
-    async judgeDecision(correct: boolean, correctSpelling?: string, typedSpelling?: string) {
+    async judgeDecision(correct: boolean, word: string) {
         return sendEvent('judge-decision', {
             roomCode: this.roomCode,
             correct,
-            correctSpelling,
-            typedSpelling
-        })
-    }
-
-    async revealWord(word: string, typedSpelling: string) {
-        return sendEvent('word-revealed', {
-            roomCode: this.roomCode,
-            word,
-            typedSpelling
+            word
         })
     }
 }
