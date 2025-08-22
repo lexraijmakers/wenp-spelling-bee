@@ -155,15 +155,18 @@ function DisplayPageContent() {
                     <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
                         Wauw & Pittigman Spelling Bee
                     </h1>
+
                     <div className="flex justify-center items-center space-x-6 text-xl">
                         <span>
                             Kamer: <span className="font-mono text-yellow-400">{roomCode}</span>
                         </span>
+
                         <div
                             className={`w-4 h-4 rounded-full ${
                                 isConnected ? 'bg-green-400' : 'bg-red-400'
                             }`}
-                        ></div>
+                        />
+
                         <span className={isConnected ? 'text-green-400' : 'text-red-400'}>
                             {isConnected ? 'Verbonden' : 'Niet verbonden'}
                         </span>
@@ -255,19 +258,23 @@ function DisplayPageContent() {
                         <h2 className="text-3xl font-bold mb-6 text-center text-yellow-300">
                             Woord Onthuld
                         </h2>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-xl">
                             <div className="text-center">
                                 <h3 className="text-2xl font-bold mb-4 text-green-300">
                                     Correct woord:
                                 </h3>
+
                                 <div className="text-4xl font-mono font-bold text-white bg-green-600/30 rounded-lg p-4">
                                     {revealedWord.word}
                                 </div>
                             </div>
+
                             <div className="text-center">
                                 <h3 className="text-2xl font-bold mb-4 text-blue-300">
                                     Getypte spelling:
                                 </h3>
+
                                 <div className="text-4xl font-mono font-bold text-white bg-blue-600/30 rounded-lg p-4">
                                     {revealedWord.typedSpelling || '(geen spelling getypt)'}
                                 </div>
@@ -282,6 +289,7 @@ function DisplayPageContent() {
                         <h2 className="text-2xl font-bold mb-4 text-center">
                             Beschikbare Informatie
                         </h2>
+
                         <div className="grid grid-cols-2 gap-4">
                             {availableInfo.map((info) => (
                                 <div key={info} className="bg-white/20 rounded-lg p-3 text-center">
@@ -290,6 +298,7 @@ function DisplayPageContent() {
                                 </div>
                             ))}
                         </div>
+
                         <div className="text-center mt-4 text-lg text-blue-200">
                             Je kunt om bovenstaande informatie vragen aan de jury
                         </div>
@@ -302,6 +311,7 @@ function DisplayPageContent() {
                         <h3 className="text-2xl font-bold mb-2 text-yellow-300">
                             {getInfoLabel(providedInfo.type)} Gegeven:
                         </h3>
+
                         <div className="text-xl">{providedInfo.content}</div>
                     </div>
                 )}
@@ -323,6 +333,7 @@ function DisplayPageContent() {
                             >
                                 {result.correct ? '✓ CORRECT!' : '✗ INCORRECT'}
                             </div>
+
                             {!result.correct && result.correctSpelling && (
                                 <div className="text-2xl text-red-200">
                                     Correcte spelling:{' '}
@@ -331,6 +342,7 @@ function DisplayPageContent() {
                                     </span>
                                 </div>
                             )}
+
                             {result.typedSpelling && (
                                 <div className="text-xl text-blue-200 mt-2">
                                     Getypte spelling:{' '}
@@ -342,48 +354,6 @@ function DisplayPageContent() {
                         </div>
                     </div>
                 )}
-
-                {/* Instructions */}
-                <div className="bg-white/10 backdrop-blur rounded-2xl p-6">
-                    <h2 className="text-2xl font-bold mb-4 text-center">
-                        Instructies voor Deelnemer
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
-                        <div>
-                            <h3 className="font-bold mb-2 text-blue-300">Je kunt vragen om:</h3>
-                            <ul className="space-y-1">
-                                <li>• Herhaling van het woord</li>
-                                <li>• Definitie</li>
-                                <li>• Gebruik in een zin</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 className="font-bold mb-2 text-blue-300">Regels:</h3>
-                            <ul className="space-y-1">
-                                <li>
-                                    • {DEFAULT_TIMER_CONFIG.totalTime} seconden totaal per woord
-                                </li>
-                                <li>
-                                    • Groen: Verzoeken toegestaan (
-                                    {DEFAULT_TIMER_CONFIG.totalTime -
-                                        DEFAULT_TIMER_CONFIG.yellowPhaseStart}
-                                    s)
-                                </li>
-                                <li>
-                                    • Geel: Laatste verzoeken (
-                                    {DEFAULT_TIMER_CONFIG.yellowPhaseStart -
-                                        DEFAULT_TIMER_CONFIG.redPhaseStart}
-                                    s)
-                                </li>
-                                <li>
-                                    • Rood: Begin met spellen! ({DEFAULT_TIMER_CONFIG.redPhaseStart}
-                                    s)
-                                </li>
-                                <li>• Spel letter voor letter duidelijk</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     )

@@ -151,8 +151,11 @@ function JudgePageContent() {
                         <div className="flex items-center space-x-4">
                             <div className="text-sm">
                                 <span className="text-gray-600">Room:</span>
-                                <span className="font-mono text-lg ml-2">{roomCode}</span>
+                                <span className="font-mono text-lg ml-2 text-green-600">
+                                    {roomCode}
+                                </span>
                             </div>
+
                             <div
                                 className={`w-3 h-3 rounded-full ${
                                     isConnected ? 'bg-green-500' : 'bg-red-500'
@@ -170,6 +173,7 @@ function JudgePageContent() {
                             <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Difficulty
                             </label>
+
                             <select
                                 value={selectedDifficulty}
                                 onChange={(e) => setSelectedDifficulty(Number(e.target.value))}
@@ -182,6 +186,7 @@ function JudgePageContent() {
                                 ))}
                             </select>
                         </div>
+
                         <div className="flex items-end">
                             <button
                                 onClick={selectNewWord}
@@ -202,6 +207,7 @@ function JudgePageContent() {
                             <div className="text-3xl font-bold text-center text-gray-900 mb-2">
                                 {currentWord.word}
                             </div>
+
                             <div className="text-center text-gray-600">
                                 Level {currentWord.difficulty}
                             </div>
@@ -212,6 +218,7 @@ function JudgePageContent() {
                                 <strong className="text-gray-900">Definition:</strong>{' '}
                                 <span className="text-gray-700">{currentWord.definition}</span>
                             </div>
+
                             <div>
                                 <strong className="text-gray-900">Sentence:</strong>{' '}
                                 <span className="text-gray-700">{currentWord.sentence}</span>
@@ -226,6 +233,7 @@ function JudgePageContent() {
                         <h3 className="text-lg font-semibold mb-4 text-gray-900">
                             Type Along with Contestant
                         </h3>
+
                         <input
                             type="text"
                             value={typedSpelling}
@@ -233,6 +241,7 @@ function JudgePageContent() {
                             placeholder="Type the spelling as the contestant says it..."
                             className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-lg font-mono text-gray-900"
                         />
+
                         <div className="mt-2 text-sm text-gray-600">
                             Correct spelling:{' '}
                             <span className="font-mono font-bold">{currentWord.word}</span>
@@ -247,6 +256,7 @@ function JudgePageContent() {
                         <h3 className="text-lg font-semibold mb-4 text-gray-900">
                             Provide Information
                         </h3>
+
                         <div className="grid grid-cols-1 gap-2">
                             <button
                                 onClick={() => provideInfo('definition')}
@@ -255,6 +265,7 @@ function JudgePageContent() {
                             >
                                 Definition
                             </button>
+
                             <button
                                 onClick={() => provideInfo('sentence')}
                                 disabled={!currentWord}
@@ -270,6 +281,7 @@ function JudgePageContent() {
                         <h3 className="text-lg font-semibold mb-4 text-gray-900">
                             Timer & Decisions
                         </h3>
+
                         <div className="space-y-3">
                             <div className="flex space-x-2">
                                 <button
@@ -279,6 +291,7 @@ function JudgePageContent() {
                                 >
                                     Start Timer
                                 </button>
+
                                 <button
                                     onClick={resetTimer}
                                     disabled={!timerActive}
@@ -304,6 +317,7 @@ function JudgePageContent() {
                                 >
                                     ✓ Correct
                                 </button>
+
                                 <button
                                     onClick={markIncorrect}
                                     disabled={!currentWord}
