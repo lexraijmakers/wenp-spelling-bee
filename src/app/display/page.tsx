@@ -2,8 +2,8 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useSpellingBeeRealtime } from 'lib/realtime'
-import { DEFAULT_TIMER_CONFIG, getTimerPhase } from 'lib/timer-config'
+import { useSpellingBeeRealtime } from '@/lib/realtime'
+import { DEFAULT_TIMER_CONFIG, getTimerPhase } from '@/lib/timer-config'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 

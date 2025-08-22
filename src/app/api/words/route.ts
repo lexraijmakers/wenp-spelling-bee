@@ -1,43 +1,32 @@
-import fs from 'fs'
+import { Difficulty } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
-import path from 'path'
-
-interface Word {
-    id: number
-    word: string
-    sentence: string
-    definition: string
-    difficulty: number
-}
-
-interface WordsData {
-    categories: string[]
-    words: Word[]
-}
-
-const WORDS_FILE_PATH = path.join(process.cwd(), 'public', 'dutch-words.json')
-
-function readWordsFile(): WordsData {
-    const fileContents = fs.readFileSync(WORDS_FILE_PATH, 'utf8')
-    return JSON.parse(fileContents)
-}
-
-function writeWordsFile(data: WordsData): void {
-    fs.writeFileSync(WORDS_FILE_PATH, JSON.stringify(data, null, 4))
-}
-
-function getNextId(words: Word[]): number {
-    return Math.max(...words.map((w) => w.id), 0) + 1
-}
+import { prisma } from '@/lib/prisma'
 
 // GET - Fetch all words
 export async function GET() {
     try {
-        const data = readWordsFile()
+        const words = await prisma.word.findMany({
+            orderBy: { word: 'asc' }
+        })
+
+        // Return data with enum values
+        const formattedWords = words.map((word) => ({
+            id: word.id,
+            word: word.word,
+            sentence: word.sentence || '',
+            definition: word.definition || '',
+            difficulty: word.difficulty
+        }))
+
+        // Return data in expected format
+        const data = {
+            words: formattedWords
+        }
+
         return NextResponse.json(data)
     } catch (error) {
-        console.error('Error reading words file:', error)
-        return NextResponse.json({ error: 'Failed to read words' }, { status: 500 })
+        console.error('Error fetching words:', error)
+        return NextResponse.json({ error: 'Failed to fetch words' }, { status: 500 })
     }
 }
 
@@ -51,29 +40,40 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        const data = readWordsFile()
+        // Validate difficulty is a valid enum value
+        if (!Object.values(Difficulty).includes(newWord.difficulty)) {
+            return NextResponse.json({ error: 'Invalid difficulty value' }, { status: 400 })
+        }
 
         // Check if word already exists
-        const existingWord = data.words.find(
-            (w) => w.word.toLowerCase() === newWord.word.toLowerCase()
-        )
+        const existingWord = await prisma.word.findUnique({
+            where: { word: newWord.word.toLowerCase() }
+        })
+
         if (existingWord) {
             return NextResponse.json({ error: 'Word already exists' }, { status: 409 })
         }
 
-        // Add new word with auto-generated ID
-        const wordToAdd: Word = {
-            id: getNextId(data.words),
-            word: newWord.word,
-            sentence: newWord.sentence,
-            definition: newWord.definition,
-            difficulty: parseInt(newWord.difficulty)
+        // Create new word
+        const createdWord = await prisma.word.create({
+            data: {
+                word: newWord.word,
+                sentence: newWord.sentence,
+                definition: newWord.definition,
+                difficulty: newWord.difficulty
+            }
+        })
+
+        // Return the created word
+        const formattedWord = {
+            id: createdWord.id,
+            word: createdWord.word,
+            sentence: createdWord.sentence || '',
+            definition: createdWord.definition || '',
+            difficulty: createdWord.difficulty
         }
 
-        data.words.push(wordToAdd)
-        writeWordsFile(data)
-
-        return NextResponse.json(wordToAdd, { status: 201 })
+        return NextResponse.json(formattedWord, { status: 201 })
     } catch (error) {
         console.error('Error creating word:', error)
         return NextResponse.json({ error: 'Failed to create word' }, { status: 500 })

@@ -32,19 +32,20 @@ import {
     TableRow
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+import { getDifficultyDisplay, getDifficultyLevel } from '@/lib/difficulty-utils'
+import { Difficulty } from '@prisma/client'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface Word {
-    id: number
+    id: string
     word: string
     sentence: string
     definition: string
-    difficulty: number
+    difficulty: Difficulty
 }
 
 interface WordsData {
-    categories: string[]
     words: Word[]
 }
 
@@ -58,7 +59,7 @@ export default function WordsPage() {
         word: '',
         sentence: '',
         definition: '',
-        difficulty: '1'
+        difficulty: 'VERY_EASY'
     })
     const [searchTerm, setSearchTerm] = useState('')
     const [difficultyFilter, setDifficultyFilter] = useState('all')
@@ -134,7 +135,7 @@ export default function WordsPage() {
         }
     }
 
-    const handleDeleteWord = async (id: number) => {
+    const handleDeleteWord = async (id: string) => {
         try {
             const response = await fetch(`/api/words/${id}`, {
                 method: 'DELETE'
@@ -157,7 +158,7 @@ export default function WordsPage() {
             word: '',
             sentence: '',
             definition: '',
-            difficulty: '1'
+            difficulty: 'VERY_EASY'
         })
     }
 
@@ -167,7 +168,7 @@ export default function WordsPage() {
             word: word.word,
             sentence: word.sentence,
             definition: word.definition,
-            difficulty: word.difficulty.toString()
+            difficulty: word.difficulty
         })
         setShowEditDialog(true)
     }
@@ -184,7 +185,7 @@ export default function WordsPage() {
                 word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 word.definition.toLowerCase().includes(searchTerm.toLowerCase())
             const matchesDifficulty =
-                difficultyFilter === 'all' || word.difficulty.toString() === difficultyFilter
+                difficultyFilter === 'all' || word.difficulty === difficultyFilter
             return matchesSearch && matchesDifficulty
         }) || []
 
@@ -245,11 +246,11 @@ export default function WordsPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Difficulties</SelectItem>
-                                        <SelectItem value="1">Level 1</SelectItem>
-                                        <SelectItem value="2">Level 2</SelectItem>
-                                        <SelectItem value="3">Level 3</SelectItem>
-                                        <SelectItem value="4">Level 4</SelectItem>
-                                        <SelectItem value="5">Level 5</SelectItem>
+                                        <SelectItem value="VERY_EASY">Very Easy</SelectItem>
+                                        <SelectItem value="EASY">Easy</SelectItem>
+                                        <SelectItem value="MEDIUM">Medium</SelectItem>
+                                        <SelectItem value="HARD">Hard</SelectItem>
+                                        <SelectItem value="VERY_HARD">Very Hard</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -281,8 +282,8 @@ export default function WordsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {filteredWords.map((word) => (
-                                        <TableRow key={word.id}>
+                                    {filteredWords.map((word, index) => (
+                                        <TableRow key={word.id || `word-${index}`}>
                                             <TableCell className="font-medium">
                                                 {word.word}
                                             </TableCell>
@@ -295,16 +296,18 @@ export default function WordsPage() {
                                             <TableCell>
                                                 <span
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        word.difficulty <= 2
+                                                        getDifficultyLevel(word.difficulty) <= 2
                                                             ? 'bg-green-100 text-green-800'
-                                                            : word.difficulty <= 3
+                                                            : getDifficultyLevel(word.difficulty) <=
+                                                              3
                                                             ? 'bg-yellow-100 text-yellow-800'
-                                                            : word.difficulty <= 4
+                                                            : getDifficultyLevel(word.difficulty) <=
+                                                              4
                                                             ? 'bg-orange-100 text-orange-800'
                                                             : 'bg-red-100 text-red-800'
                                                     }`}
                                                 >
-                                                    Level {word.difficulty}
+                                                    {getDifficultyDisplay(word.difficulty)}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -419,11 +422,11 @@ export default function WordsPage() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="1">Level 1 - Easy</SelectItem>
-                                        <SelectItem value="2">Level 2 - Medium</SelectItem>
-                                        <SelectItem value="3">Level 3 - Medium-Hard</SelectItem>
-                                        <SelectItem value="4">Level 4 - Hard</SelectItem>
-                                        <SelectItem value="5">Level 5 - Very Hard</SelectItem>
+                                        <SelectItem value="VERY_EASY">Very Easy</SelectItem>
+                                        <SelectItem value="EASY">Easy</SelectItem>
+                                        <SelectItem value="MEDIUM">Medium</SelectItem>
+                                        <SelectItem value="HARD">Hard</SelectItem>
+                                        <SelectItem value="VERY_HARD">Very Hard</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -489,11 +492,11 @@ export default function WordsPage() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="1">Level 1 - Easy</SelectItem>
-                                        <SelectItem value="2">Level 2 - Medium</SelectItem>
-                                        <SelectItem value="3">Level 3 - Medium-Hard</SelectItem>
-                                        <SelectItem value="4">Level 4 - Hard</SelectItem>
-                                        <SelectItem value="5">Level 5 - Very Hard</SelectItem>
+                                        <SelectItem value="VERY_EASY">Very Easy</SelectItem>
+                                        <SelectItem value="EASY">Easy</SelectItem>
+                                        <SelectItem value="MEDIUM">Medium</SelectItem>
+                                        <SelectItem value="HARD">Hard</SelectItem>
+                                        <SelectItem value="VERY_HARD">Very Hard</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -11,9 +11,11 @@ import {
     SelectTrigger,
     SelectValue
 } from '@/components/ui/select'
-import { useSpellingBeeRealtime } from 'lib/realtime'
-import { DEFAULT_TIMER_CONFIG } from 'lib/timer-config'
-import { getAvailableInfo, getRandomWord, loadWords, Word, WordDatabase } from 'lib/words'
+import { getDifficultyDisplay } from '@/lib/difficulty-utils'
+import { useSpellingBeeRealtime } from '@/lib/realtime'
+import { DEFAULT_TIMER_CONFIG } from '@/lib/timer-config'
+import { getAvailableInfo, getRandomWord, loadWords, Word, WordDatabase } from '@/lib/words'
+import { Difficulty } from '@prisma/client'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 
@@ -23,7 +25,7 @@ function JudgePageContent() {
 
     const [wordDatabase, setWordDatabase] = useState<WordDatabase | null>(null)
     const [currentWord, setCurrentWord] = useState<Word | null>(null)
-    const [selectedDifficulty, setSelectedDifficulty] = useState(1)
+    const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('VERY_EASY')
     const [isConnected] = useState(true)
     const [timerActive, setTimerActive] = useState(false)
 
@@ -162,18 +164,20 @@ function JudgePageContent() {
                             <div className="space-y-2">
                                 <Label htmlFor="difficulty">Difficulty Level</Label>
                                 <Select
-                                    value={selectedDifficulty.toString()}
-                                    onValueChange={(value) => setSelectedDifficulty(Number(value))}
+                                    value={selectedDifficulty}
+                                    onValueChange={(value) =>
+                                        setSelectedDifficulty(value as Difficulty)
+                                    }
                                 >
                                     <SelectTrigger id="difficulty">
                                         <SelectValue placeholder="Select difficulty" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {[1, 2, 3, 4, 5].map((level) => (
-                                            <SelectItem key={level} value={level.toString()}>
-                                                Level {level}
-                                            </SelectItem>
-                                        ))}
+                                        <SelectItem value="VERY_EASY">Very Easy</SelectItem>
+                                        <SelectItem value="EASY">Easy</SelectItem>
+                                        <SelectItem value="MEDIUM">Medium</SelectItem>
+                                        <SelectItem value="HARD">Hard</SelectItem>
+                                        <SelectItem value="VERY_HARD">Very Hard</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -197,7 +201,9 @@ function JudgePageContent() {
                         <CardContent>
                             <div className="text-center mb-6">
                                 <div className="text-4xl font-bold mb-2">{currentWord.word}</div>
-                                <Badge variant="secondary">Level {currentWord.difficulty}</Badge>
+                                <Badge variant="secondary">
+                                    {getDifficultyDisplay(currentWord.difficulty)}
+                                </Badge>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,14 +1,15 @@
+import { Difficulty, PrismaClient } from '@prisma/client'
+
 export interface Word {
-    id: number
+    id: string
     word: string
     sentence: string
     definition: string
-    difficulty: number
+    difficulty: Difficulty
 }
 
 export interface WordDatabase {
     words: Word[]
-    categories: string[]
 }
 
 let wordDatabase: WordDatabase | null = null
@@ -19,8 +20,33 @@ export const loadWords = async (): Promise<WordDatabase> => {
     }
 
     try {
-        const response = await fetch('/dutch-words.json')
-        wordDatabase = await response.json()
+        // For client-side, fetch from API
+        if (typeof window !== 'undefined') {
+            const response = await fetch('/api/words')
+            wordDatabase = await response.json()
+            return wordDatabase!
+        }
+
+        // For server-side, use Prisma directly
+        const prisma = new PrismaClient()
+        const words = await prisma.word.findMany({
+            orderBy: { word: 'asc' }
+        })
+
+        // Keep the original format with enum
+        const formattedWords = words.map((word) => ({
+            id: word.id,
+            word: word.word,
+            sentence: word.sentence || '',
+            definition: word.definition || '',
+            difficulty: word.difficulty
+        }))
+
+        wordDatabase = {
+            words: formattedWords
+        }
+
+        await prisma.$disconnect()
         return wordDatabase!
     } catch (error) {
         console.error('Failed to load words:', error)
@@ -28,11 +54,11 @@ export const loadWords = async (): Promise<WordDatabase> => {
     }
 }
 
-export const getWordsByDifficulty = (words: Word[], difficulty: number): Word[] => {
+export const getWordsByDifficulty = (words: Word[], difficulty: Difficulty): Word[] => {
     return words.filter((word) => word.difficulty === difficulty)
 }
 
-export const getRandomWord = (words: Word[], difficulty: number): Word | null => {
+export const getRandomWord = (words: Word[], difficulty: Difficulty): Word | null => {
     const filteredWords = getWordsByDifficulty(words, difficulty)
 
     if (filteredWords.length === 0) {

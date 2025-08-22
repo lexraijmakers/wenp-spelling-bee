@@ -1,36 +1,11 @@
-import fs from 'fs'
+import { Difficulty } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
-import path from 'path'
-
-interface Word {
-    id: number
-    word: string
-    sentence: string
-    definition: string
-    difficulty: number
-}
-
-interface WordsData {
-    categories: string[]
-    words: Word[]
-}
-
-const WORDS_FILE_PATH = path.join(process.cwd(), 'public', 'dutch-words.json')
-
-function readWordsFile(): WordsData {
-    const fileContents = fs.readFileSync(WORDS_FILE_PATH, 'utf8')
-    return JSON.parse(fileContents)
-}
-
-function writeWordsFile(data: WordsData): void {
-    fs.writeFileSync(WORDS_FILE_PATH, JSON.stringify(data, null, 4))
-}
+import { prisma } from '@/lib/prisma'
 
 // PUT - Update word
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id: idParam } = await params
-        const id = parseInt(idParam)
         const updatedWord = await request.json()
 
         // Validate required fields
@@ -43,34 +18,53 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        const data = readWordsFile()
-        const wordIndex = data.words.findIndex((w) => w.id === id)
+        // Validate difficulty is a valid enum value
+        if (!Object.values(Difficulty).includes(updatedWord.difficulty)) {
+            return NextResponse.json({ error: 'Invalid difficulty value' }, { status: 400 })
+        }
 
-        if (wordIndex === -1) {
+        // Check if word exists
+        const existingWord = await prisma.word.findUnique({
+            where: { id: idParam }
+        })
+
+        if (!existingWord) {
             return NextResponse.json({ error: 'Word not found' }, { status: 404 })
         }
 
         // Check if word name already exists (excluding current word)
-        const existingWord = data.words.find(
-            (w) => w.id !== id && w.word.toLowerCase() === updatedWord.word.toLowerCase()
-        )
-        if (existingWord) {
+        const duplicateWord = await prisma.word.findFirst({
+            where: {
+                word: updatedWord.word.toLowerCase(),
+                id: { not: idParam }
+            }
+        })
+
+        if (duplicateWord) {
             return NextResponse.json({ error: 'Word already exists' }, { status: 409 })
         }
 
         // Update the word
-        const wordToUpdate: Word = {
-            id: id,
-            word: updatedWord.word,
-            sentence: updatedWord.sentence,
-            definition: updatedWord.definition,
-            difficulty: parseInt(updatedWord.difficulty)
+        const updated = await prisma.word.update({
+            where: { id: idParam },
+            data: {
+                word: updatedWord.word,
+                sentence: updatedWord.sentence,
+                definition: updatedWord.definition,
+                difficulty: updatedWord.difficulty
+            }
+        })
+
+        // Return the updated word
+        const formattedWord = {
+            id: updated.id,
+            word: updated.word,
+            sentence: updated.sentence || '',
+            definition: updated.definition || '',
+            difficulty: updated.difficulty
         }
 
-        data.words[wordIndex] = wordToUpdate
-        writeWordsFile(data)
-
-        return NextResponse.json(wordToUpdate)
+        return NextResponse.json(formattedWord)
     } catch (error) {
         console.error('Error updating word:', error)
         return NextResponse.json({ error: 'Failed to update word' }, { status: 500 })
@@ -84,19 +78,31 @@ export async function DELETE(
 ) {
     try {
         const { id: idParam } = await params
-        const id = parseInt(idParam)
-        const data = readWordsFile()
-        const wordIndex = data.words.findIndex((w) => w.id === id)
 
-        if (wordIndex === -1) {
+        // Check if word exists
+        const existingWord = await prisma.word.findUnique({
+            where: { id: idParam }
+        })
+
+        if (!existingWord) {
             return NextResponse.json({ error: 'Word not found' }, { status: 404 })
         }
 
-        const deletedWord = data.words[wordIndex]
-        data.words.splice(wordIndex, 1)
-        writeWordsFile(data)
+        // Delete the word
+        const deletedWord = await prisma.word.delete({
+            where: { id: idParam }
+        })
 
-        return NextResponse.json(deletedWord)
+        // Return the deleted word
+        const formattedWord = {
+            id: deletedWord.id,
+            word: deletedWord.word,
+            sentence: deletedWord.sentence || '',
+            definition: deletedWord.definition || '',
+            difficulty: deletedWord.difficulty
+        }
+
+        return NextResponse.json(formattedWord)
     } catch (error) {
         console.error('Error deleting word:', error)
         return NextResponse.json({ error: 'Failed to delete word' }, { status: 500 })
